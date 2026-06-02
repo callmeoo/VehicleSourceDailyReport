@@ -608,7 +608,7 @@
           <section class="chart-panel" aria-label="业务指标趋势图">
             <div class="chart-header">
               <div class="chart-title">业务指标趋势图</div>
-              <div class="chart-tip">左轴：台次；右轴：成交率；标注峰值和最新有效日。点击指标可控制折线显示或隐藏</div>
+              <div class="chart-tip">左轴：台次；右轴：成交率；每隔 5 天标注当日数值。点击指标可控制折线显示或隐藏</div>
             </div>
             <div class="chart-legend" id="chartLegend"></div>
             <svg class="chart-svg" id="trendChart" viewBox="0 0 980 240" role="img" aria-label="业务指标趋势折线图"></svg>
@@ -647,7 +647,7 @@
         </li>
         <li>
           <span class="req-title">趋势图</span>
-          <span class="req-desc">页面展示业务指标趋势折线图，横轴为日期，左侧主坐标为台次，右侧副坐标为成交率；折线标注峰值和最新有效日数值，支持点击指标控制对应折线显示或隐藏。</span>
+          <span class="req-desc">页面展示业务指标趋势折线图，横轴为日期，左侧主坐标为台次，右侧副坐标为成交率；折线每隔 5 天（第 5、10、15… 天）标注当日数值，仅标注当月有数据的日期，支持点击指标控制对应折线显示或隐藏。</span>
         </li>
         <li>
           <span class="req-title">指标</span>
@@ -659,7 +659,7 @@
         </li>
         <li>
           <span class="req-title">权限</span>
-          <span class="req-desc">Tab 需单独查看权限；数据权限支持按大区域、小区域、门店配置；导出需单独授权。</span>
+          <span class="req-desc">这个 Tab 需要单独开查看权限；数据权限支持按大区域、小区域、门店配置；导出需单独授权。</span>
         </li>
         <li>
           <span class="req-title">初始化</span>
@@ -921,17 +921,10 @@
         }
         const polyline = `<polyline points="${points.join(" ")}" fill="none" stroke="${metric.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" />`;
 
-        const validPoints = metric.daily
-          .slice(0, data.validDays)
+        // 每隔 5 天（第 5、10、15… 天）标注当日数值，仅标当月有数据的日期
+        const labelPoints = metric.daily
           .map((value, index) => ({ value, index }))
-          .filter((item) => item.value > 0);
-        if (!validPoints.length) {
-          return polyline;
-        }
-
-        const maxPoint = validPoints.reduce((current, item) => (item.value > current.value ? item : current), validPoints[0]);
-        const latestPoint = validPoints[validPoints.length - 1];
-        const labelPoints = [maxPoint, latestPoint].filter((point, index, list) => list.findIndex((item) => item.index === point.index) === index);
+          .filter((item) => item.index < data.validDays && item.value > 0 && (item.index + 1) % 5 === 0);
         const labels = labelPoints.map((point) => {
           const labelX = x(point.index);
           const labelY = yFor(point.value);

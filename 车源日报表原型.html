@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>车源部门业务日报表原型</title>
+  <style>
+    :root {
+      --primary: #1677ff;
+      --primary-light: #e6f4ff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --header: #f8fafc;
+      --danger: #ff4d4f;
+      --success: #22c55e;
+      --warning: #faad14;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 188px;
+      padding: 0;
+      color: #ffffff;
+      background: #354052;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 44px;
+      margin: 0;
+      padding: 0 18px 0 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+      background: #465166;
+    }
+
+    .menu-item {
+      height: 46px;
+      padding: 0 0 0 40px;
+      color: #bfc7d5;
+      font-size: 14px;
+      line-height: 46px;
+    }
+
+    .menu-item.active {
+      color: #ffffff;
+      background: #2f8df4;
+    }
+
+    .menu-icon {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 8px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+    }
+
+    .menu-arrow {
+      font-size: 16px;
+      color: #d8dee9;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 24px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .breadcrumb {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .page {
+      padding: 18px 24px 32px;
+    }
+
+    .page-title {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 650;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      padding: 0 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .tab {
+      flex: 0 0 auto;
+      position: relative;
+      padding: 14px 18px;
+      color: var(--muted);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      color: var(--primary);
+      font-weight: 650;
+    }
+
+    .tab.active::after {
+      position: absolute;
+      right: 12px;
+      bottom: 0;
+      left: 12px;
+      height: 2px;
+      background: var(--primary);
+      content: "";
+    }
+
+    .panel {
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 14px 16px;
+      margin-bottom: 14px;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field label {
+      flex: 0 0 auto;
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 34px;
+      flex: 1;
+      min-width: 0;
+      padding: 0 10px;
+      border: 1px solid #d9dce3;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .control .hint {
+      color: #9ca3af;
+    }
+
+    select.control {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%), linear-gradient(135deg, #9ca3af 50%, transparent 50%);
+      background-position: calc(100% - 14px) 14px, calc(100% - 9px) 14px;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 28px;
+    }
+
+    input.control {
+      appearance: none;
+      font-family: inherit;
+    }
+
+    .input-control {
+      justify-content: flex-start;
+      color: #9ca3af;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding-top: 2px;
+    }
+
+    button {
+      height: 34px;
+      padding: 0 16px;
+      border: 1px solid #d9dce3;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      cursor: default;
+      font-size: 14px;
+    }
+
+    button.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button.disabled {
+      color: #9ca3af;
+      background: #f3f4f6;
+    }
+
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 32px 0 10px;
+    }
+
+    .table-title {
+      font-weight: 650;
+    }
+
+    .selected-month {
+      margin-left: 20px;
+      color: #ff4d4f;
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      min-width: 1840px;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      height: 38px;
+      padding: 0 10px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--header);
+      color: #4b5563;
+      font-weight: 650;
+    }
+
+    th:first-child,
+    td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      width: 230px;
+      min-width: 230px;
+      text-align: left;
+      background: #fff;
+      box-shadow: 1px 0 0 var(--border);
+    }
+
+    th:first-child {
+      z-index: 4;
+      background: var(--header);
+    }
+
+    th:nth-child(2),
+    td:nth-child(2) {
+      position: sticky;
+      left: 230px;
+      z-index: 3;
+      width: 110px;
+      min-width: 110px;
+      background: #fbfdff;
+      font-weight: 650;
+      box-shadow: 1px 0 0 var(--border);
+    }
+
+    th:nth-child(2) {
+      z-index: 4;
+      background: #eef6ff;
+      color: var(--primary);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: none;
+    }
+
+    .metric {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 650;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .muted-cell {
+      color: #9ca3af;
+    }
+
+    .table-tools {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chart-panel {
+      margin-bottom: 14px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .chart-title {
+      font-weight: 650;
+    }
+
+    .chart-tip {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-bottom: 8px;
+      color: #374151;
+      font-size: 13px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      cursor: default;
+    }
+
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 240px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fbfdff;
+    }
+
+    .text-button {
+      height: auto;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #ff4d4f;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.35);
+      z-index: 20;
+    }
+
+    .modal-mask.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(620px, 100%);
+      padding: 20px 22px;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 650;
+    }
+
+    .modal-close {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 20px;
+    }
+
+    .modal-body {
+      margin: 0;
+      padding-left: 20px;
+      color: #374151;
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .modal-body li {
+      margin-bottom: 8px;
+    }
+
+    .req-title {
+      display: block;
+      color: #ff4d4f;
+      font-weight: 700;
+    }
+
+    .req-desc {
+      display: block;
+    }
+
+    @media (max-width: 1180px) {
+      .sidebar {
+        display: none;
+      }
+
+      .filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 14px;
+      }
+
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-title {
+        display: block;
+      }
+
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo"><span><span class="menu-icon" aria-hidden="true"></span>报表管理</span><span class="menu-arrow">⌃</span></div>
+      <div class="menu-item active">经管报表</div>
+      <div class="menu-item">上拍效率</div>
+      <div class="menu-item">车源绩效表</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumb">经管报表 / 车源日报表</div>
+      </header>
+
+      <section class="page">
+        <nav class="tabs" aria-label="经管报表标签">
+          <div class="tab">成绩单-大区域维度</div>
+          <div class="tab">成绩单-收购维度</div>
+          <div class="tab">成绩单-委拍维度</div>
+          <div class="tab">成绩单-门店维度</div>
+          <div class="tab active">车源日报表</div>
+          <div class="tab">车源上拍明细</div>
+          <div class="tab">车辆收益明细</div>
+          <div class="tab">车辆费用明细</div>
+          <div class="tab">查验统计-大区维度</div>
+          <div class="tab">查验明细</div>
+        </nav>
+
+        <div class="panel">
+          <section class="filter-grid" aria-label="查询条件">
+            <div class="field">
+              <label>时间段：</label>
+              <input class="control" id="monthPicker" type="month" value="2026-05" aria-label="时间段，仅支持选择单月" />
+            </div>
+            <div class="field">
+              <label>大区域：</label>
+              <select class="control" id="bigAreaSelect" aria-label="大区域"></select>
+            </div>
+            <div class="field">
+              <label>小区域：</label>
+              <select class="control" id="smallAreaSelect" aria-label="小区域"></select>
+            </div>
+            <div class="field">
+              <label>所属集团：</label>
+              <div class="control input-control">所属集团</div>
+            </div>
+            <div class="field">
+              <label>门店全称：</label>
+              <div class="control input-control">门店全称</div>
+            </div>
+            <div class="field">
+              <label>总店：</label>
+              <div class="control input-control">总店</div>
+            </div>
+            <div class="field">
+              <label>拍卖方式：</label>
+              <select class="control" id="auctionTypeSelect" aria-label="拍卖方式"></select>
+            </div>
+            <div class="actions">
+              <button>重置</button>
+              <button class="primary">查询</button>
+              <button>导出</button>
+            </div>
+          </section>
+
+          <div class="table-header">
+            <div>
+              <span class="table-title">车源部门业务日报表</span>
+              <span class="selected-month">所选月份：2026年-5月</span>
+            </div>
+            <div class="table-tools">
+              <button class="text-button" id="openRequirement" type="button">需求点说明</button>
+            </div>
+          </div>
+
+          <section class="chart-panel" aria-label="业务指标趋势图">
+            <div class="chart-header">
+              <div class="chart-title">业务指标趋势图</div>
+              <div class="chart-tip">左轴：台次；右轴：成交率；标注峰值和最新有效日。点击指标可控制折线显示或隐藏</div>
+            </div>
+            <div class="chart-legend" id="chartLegend"></div>
+            <svg class="chart-svg" id="trendChart" viewBox="0 0 980 240" role="img" aria-label="业务指标趋势折线图"></svg>
+          </section>
+
+          <div class="table-wrap">
+            <table>
+              <thead id="reportHead"></thead>
+              <tbody id="reportBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-mask" id="requirementModal" role="dialog" aria-modal="true" aria-labelledby="requirementTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="requirementTitle">需求点说明</h2>
+        <button class="modal-close" id="closeRequirement" type="button" aria-label="关闭">✕</button>
+      </div>
+      <ol class="modal-body">
+        <li>
+          <span class="req-title">入口</span>
+          <span class="req-desc">在 BMS 系统「经管报表」页面，于「车源上拍明细」Tab 前新增「车源日报表」Tab。</span>
+        </li>
+        <li>
+          <span class="req-title">查询</span>
+          <span class="req-desc">支持时间段、大区域、小区域、所属集团、门店全称、总店、拍卖方式筛选；时间段使用年月选择模式，仅支持选择单月，不支持跨月；大区域、小区域、拍卖方式使用 mock 下拉数据，所属集团、门店全称、总店为输入框。</span>
+        </li>
+        <li>
+          <span class="req-title">表格</span>
+          <span class="req-desc">标题旁展示「所选月份」说明；第一列为「业务指标」，后续列固定展示「合计、1、2、3 ... 31」。不足 31 天的月份，超出自然月日期展示 0。</span>
+        </li>
+        <li>
+          <span class="req-title">趋势图</span>
+          <span class="req-desc">页面展示业务指标趋势折线图，横轴为日期，左侧主坐标为台次，右侧副坐标为成交率；折线标注峰值和最新有效日数值，支持点击指标控制对应折线显示或隐藏。</span>
+        </li>
+        <li>
+          <span class="req-title">指标</span>
+          <span class="req-desc">检测数量、上拍数量、成交数量、总毛利、台均总毛利、成交率均沿用「经管报表-成绩单」对应口径。</span>
+        </li>
+        <li>
+          <span class="req-title">合计</span>
+          <span class="req-desc">台均总毛利、成交率的合计列按成绩单合计口径计算，不累加每日值。</span>
+        </li>
+        <li>
+          <span class="req-title">权限</span>
+          <span class="req-desc">Tab 需单独查看权限；数据权限支持按大区域、小区域、门店配置；导出需单独授权。</span>
+        </li>
+        <li>
+          <span class="req-title">初始化</span>
+          <span class="req-desc">功能上线时需初始化 2025年1月 至上线前月份的数据；导出内容与当前筛选条件和表格展示结果一致。</span>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    const bigAreaOptions = [
+      "全部",
+      "1-广东-广州",
+      "1-广东-佛山",
+      "2-广东-深圳",
+      "2-广东-东莞",
+      "2-广东-惠州",
+      "2-广东-中珠",
+      "2-广东-粤东",
+      "2-广东-粤西",
+      "2-广西-南宁",
+      "2-贵州-贵阳",
+      "2-海南-海口",
+      "2-四川-成都",
+      "3-湖北-武汉",
+      "3-湖南-长沙",
+      "3-山西-太原",
+      "3-江西-南昌",
+      "3-河南-郑州",
+      "3-江苏-南京",
+      "3-浙江-杭州",
+      "3-福建-福州",
+      "3-陕西-西安",
+      "3-省外-其他",
+      "2-事业部-本部",
+      "置换一部",
+      "置换三部"
+    ];
+
+    const smallAreaMockMap = {
+      "全部": ["全部"],
+      "1-广东-广州": ["全部", "广州一区", "广州二区", "广州直营店组"],
+      "1-广东-佛山": ["全部", "佛山一区", "佛山二区"],
+      "2-广东-深圳": ["全部", "深圳一区", "深圳二区", "深圳东部"],
+      "2-广东-东莞": ["全部", "东莞一区", "东莞二区"],
+      "2-广东-惠州": ["全部", "惠州一区", "惠州二区"],
+      "2-广东-中珠": ["全部", "中山小区", "珠海小区"],
+      "2-广东-粤东": ["全部", "汕头小区", "揭阳小区"],
+      "2-广东-粤西": ["全部", "湛江小区", "茂名小区"],
+      "2-广西-南宁": ["全部", "南宁一区", "南宁二区"],
+      "2-贵州-贵阳": ["全部", "贵阳一区", "贵阳二区"],
+      "2-海南-海口": ["全部", "海口一区", "三亚小区"],
+      "2-四川-成都": ["全部", "成都一区", "成都二区"],
+      "3-湖北-武汉": ["全部", "武汉一区", "武汉二区"],
+      "3-湖南-长沙": ["全部", "长沙一区", "长沙二区"],
+      "3-山西-太原": ["全部", "太原一区", "太原二区"],
+      "3-江西-南昌": ["全部", "南昌一区", "南昌二区"],
+      "3-河南-郑州": ["全部", "郑州一区", "郑州二区"],
+      "3-江苏-南京": ["全部", "南京一区", "苏南小区"],
+      "3-浙江-杭州": ["全部", "杭州一区", "宁波小区"],
+      "3-福建-福州": ["全部", "福州一区", "厦门小区"],
+      "3-陕西-西安": ["全部", "西安一区", "西安二区"],
+      "3-省外-其他": ["全部", "省外一区", "省外二区"],
+      "2-事业部-本部": ["全部", "本部一区", "本部二区"],
+      "置换一部": ["全部", "置换一部一区", "置换一部二区"],
+      "置换三部": ["全部", "置换三部一区", "置换三部二区"]
+    };
+
+    const auctionTypeOptions = ["全部", "竞价大厅", "好车直卖", "专场拍", "报废专场", "共享拍", "比亚迪专场", "顺序拍"];
+
+    const fillOptions = (select, options, selectedValue) => {
+      select.innerHTML = options.map((option) => {
+        const selected = option === selectedValue ? " selected" : "";
+        return `<option value="${option}"${selected}>${option}</option>`;
+      }).join("");
+    };
+
+    const bigAreaSelect = document.querySelector("#bigAreaSelect");
+    const smallAreaSelect = document.querySelector("#smallAreaSelect");
+    const auctionTypeSelect = document.querySelector("#auctionTypeSelect");
+
+    fillOptions(bigAreaSelect, bigAreaOptions, "1-广东-广州");
+    fillOptions(smallAreaSelect, smallAreaMockMap["1-广东-广州"], "全部");
+    fillOptions(auctionTypeSelect, auctionTypeOptions, "全部");
+
+    bigAreaSelect.addEventListener("change", () => {
+      fillOptions(smallAreaSelect, smallAreaMockMap[bigAreaSelect.value] || ["全部"], "全部");
+    });
+
+    const fmtInt = (value) => Math.round(value).toLocaleString("en-US");
+    const fmtPct = (value) => `${value.toFixed(1)}%`;
+
+    const rand = (seed) => {
+      const x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    };
+
+    // 原型用确定性 mock 数据：按所选月份生成每日值，合计统一由每日值推导，保证表内自洽
+    const buildData = (monthValue) => {
+      const [year, month] = monthValue.split("-").map(Number);
+      const validDays = new Date(year, month, 0).getDate();
+      const seed0 = year * 31 + month * 7;
+      const detect = [];
+      const up = [];
+      const deal = [];
+      const gross = [];
+
+      for (let day = 1; day <= 31; day += 1) {
+        if (day > validDays) {
+          detect.push(0);
+          up.push(0);
+          deal.push(0);
+          gross.push(0);
+          continue;
+        }
+        const d = Math.round(42 + rand(seed0 + day * 1.3) * 24);
+        const u = Math.round(d * (0.80 + rand(seed0 + day * 2.7) * 0.10));
+        const dl = Math.round(u * (0.36 + rand(seed0 + day * 3.9) * 0.07));
+        const avg = Math.round(4780 + rand(seed0 + day * 5.1) * 260);
+        detect.push(d);
+        up.push(u);
+        deal.push(dl);
+        gross.push(dl * avg);
+      }
+
+      const avgDaily = deal.map((value, index) => (value ? Math.round(gross[index] / value) : 0));
+      const rateDaily = up.map((value, index) => (value ? (deal[index] / value) * 100 : 0));
+      const sum = (list) => list.reduce((acc, value) => acc + value, 0);
+      const totalUp = sum(up);
+      const totalDeal = sum(deal);
+      const totalGross = sum(gross);
+
+      const metrics = [
+        { name: "检测数量（台）", color: "#1677ff", chart: true, axis: "left", daily: detect, total: sum(detect), fmt: fmtInt },
+        { name: "上拍数量（去重）", color: "#22c55e", chart: true, axis: "left", daily: up, total: totalUp, fmt: fmtInt },
+        { name: "成交数量（台）", color: "#faad14", chart: true, axis: "left", daily: deal, total: totalDeal, fmt: fmtInt },
+        { name: "总毛利（元）", color: "#ef4444", chart: false, daily: gross, total: totalGross, fmt: fmtInt },
+        // 台均总毛利、成交率的合计按成绩单口径计算，不累加每日值
+        { name: "台均总毛利（元）", color: "#8b5cf6", chart: false, daily: avgDaily, total: totalDeal ? Math.round(totalGross / totalDeal) : 0, fmt: fmtInt },
+        { name: "成交率", color: "#06b6d4", chart: true, axis: "right", daily: rateDaily, total: totalUp ? (totalDeal / totalUp) * 100 : 0, fmt: fmtPct }
+      ];
+
+      return { metrics, validDays };
+    };
+
+    const head = document.querySelector("#reportHead");
+    const body = document.querySelector("#reportBody");
+    const headerColumns = ["业务指标", "合计", ...Array.from({ length: 31 }, (_, index) => String(index + 1))];
+    const chartMetricNames = ["检测数量（台）", "上拍数量（去重）", "成交数量（台）", "成交率"];
+    const visibleMetrics = new Set(chartMetricNames);
+
+    head.innerHTML = `<tr>${headerColumns.map((column) => `<th>${column}</th>`).join("")}</tr>`;
+
+    const renderTable = (data) => {
+      body.innerHTML = data.metrics.map((metric) => {
+        const cells = metric.daily.map((value, index) => {
+          const isPad = index >= data.validDays;
+          const className = isPad ? "muted-cell" : "";
+          const display = isPad ? "0" : metric.fmt(value);
+          return `<td class="${className}">${display}</td>`;
+        }).join("");
+
+        return `
+          <tr>
+            <td>
+              <span class="metric"><span class="dot" style="background:${metric.color}"></span>${metric.name}</span>
+            </td>
+            <td>${metric.fmt(metric.total)}</td>
+            ${cells}
+          </tr>
+        `;
+      }).join("");
+    };
+
+    let state = buildData(document.querySelector("#monthPicker").value);
+
+    const monthPicker = document.querySelector("#monthPicker");
+    const selectedMonth = document.querySelector(".selected-month");
+    const chartLegend = document.querySelector("#chartLegend");
+    const trendChart = document.querySelector("#trendChart");
+
+    const formatSelectedMonth = (value) => {
+      const [year, month] = value.split("-");
+      return `所选月份：${year}年-${Number(month)}月`;
+    };
+
+    monthPicker.addEventListener("change", () => {
+      state = buildData(monthPicker.value);
+      selectedMonth.textContent = formatSelectedMonth(monthPicker.value);
+      renderTable(state);
+      renderChart(state);
+    });
+
+    const renderLegend = () => {
+      chartLegend.innerHTML = state.metrics.filter((metric) => metric.chart).map((metric) => `
+        <label class="legend-item">
+          <input type="checkbox" data-metric="${metric.name}" ${visibleMetrics.has(metric.name) ? "checked" : ""} />
+          <span class="legend-color" style="background:${metric.color}"></span>
+          <span>${metric.name}</span>
+        </label>
+      `).join("");
+    };
+
+    const renderChart = (data) => {
+      const width = 980;
+      const height = 240;
+      const padding = { top: 20, right: 58, bottom: 34, left: 54 };
+      const plotWidth = width - padding.left - padding.right;
+      const plotHeight = height - padding.top - padding.bottom;
+      const x = (index) => padding.left + (index / 30) * plotWidth;
+      const days = Array.from({ length: 31 }, (_, index) => index + 1);
+      const chartMetrics = data.metrics.filter((metric) => metric.chart);
+      const countMetrics = chartMetrics.filter((metric) => metric.axis === "left");
+      const leftSamples = countMetrics.flatMap((metric) => metric.daily.slice(0, data.validDays)).filter((value) => value > 0);
+      const leftMax = Math.max(Math.ceil(Math.max(...leftSamples, 1) / 10) * 10, 10);
+      const yLeft = (value) => padding.top + (1 - value / leftMax) * plotHeight;
+
+      // 成交率右轴按数据区间自适应，避免固定 0-100% 把 35%-43% 的波动压成一条直线
+      const rateMetric = chartMetrics.find((metric) => metric.axis === "right");
+      const rateSamples = rateMetric ? rateMetric.daily.slice(0, data.validDays).filter((value) => value > 0) : [];
+      let rightMin = 0;
+      let rightMax = 100;
+      if (rateSamples.length) {
+        rightMin = Math.max(0, Math.floor((Math.min(...rateSamples) - 3) / 5) * 5);
+        rightMax = Math.min(100, Math.ceil((Math.max(...rateSamples) + 3) / 5) * 5);
+        if (rightMax - rightMin < 10) {
+          rightMax = Math.min(100, rightMin + 10);
+        }
+      }
+      const yRight = (value) => padding.top + (1 - (value - rightMin) / (rightMax - rightMin)) * plotHeight;
+
+      const grid = [1, 0.75, 0.5, 0.25, 0].map((ratio) => {
+        const gridY = padding.top + (1 - ratio) * plotHeight;
+        const leftTick = Math.round(leftMax * ratio);
+        const rightTick = rightMin + (rightMax - rightMin) * ratio;
+        const rightLabel = rightTick % 1 === 0 ? rightTick.toFixed(0) : rightTick.toFixed(1);
+        return `
+          <line x1="${padding.left}" y1="${gridY}" x2="${width - padding.right}" y2="${gridY}" stroke="#e5e7eb" />
+          <text x="${padding.left - 10}" y="${gridY + 4}" text-anchor="end" fill="#6b7280" font-size="11">${leftTick}</text>
+          <text x="${width - padding.right + 10}" y="${gridY + 4}" fill="#6b7280" font-size="11">${rightLabel}%</text>
+        `;
+      }).join("");
+
+      const xLabels = days.filter((day) => day === 1 || day % 5 === 0 || day === 31).map((day) => {
+        const labelX = x(day - 1);
+        return `<text x="${labelX}" y="${height - 10}" text-anchor="middle" fill="#9ca3af" font-size="11">${day}</text>`;
+      }).join("");
+
+      const lines = chartMetrics.map((metric) => {
+        if (!visibleMetrics.has(metric.name)) {
+          return "";
+        }
+
+        const yFor = (value) => (metric.axis === "right" ? yRight(value) : yLeft(value));
+        // 只画有数据的日期，没数据的日期断开，不画成 0 造成假断崖
+        const points = [];
+        for (let index = 0; index < data.validDays; index += 1) {
+          points.push(`${x(index)},${yFor(metric.daily[index])}`);
+        }
+        const polyline = `<polyline points="${points.join(" ")}" fill="none" stroke="${metric.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" />`;
+
+        const validPoints = metric.daily
+          .slice(0, data.validDays)
+          .map((value, index) => ({ value, index }))
+          .filter((item) => item.value > 0);
+        if (!validPoints.length) {
+          return polyline;
+        }
+
+        const maxPoint = validPoints.reduce((current, item) => (item.value > current.value ? item : current), validPoints[0]);
+        const latestPoint = validPoints[validPoints.length - 1];
+        const labelPoints = [maxPoint, latestPoint].filter((point, index, list) => list.findIndex((item) => item.index === point.index) === index);
+        const labels = labelPoints.map((point) => {
+          const labelX = x(point.index);
+          const labelY = yFor(point.value);
+          return `
+            <circle cx="${labelX}" cy="${labelY}" r="3" fill="${metric.color}" />
+            <text x="${labelX + 5}" y="${labelY - 6}" fill="${metric.color}" font-size="11" font-weight="600">${metric.fmt(point.value)}</text>
+          `;
+        }).join("");
+
+        return `${polyline}${labels}`;
+      }).join("");
+
+      trendChart.innerHTML = `
+        ${grid}
+        <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" stroke="#cbd5e1" />
+        <line x1="${width - padding.right}" y1="${padding.top}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="#cbd5e1" />
+        <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="#cbd5e1" />
+        <text x="${padding.left}" y="12" fill="#6b7280" font-size="12">台次</text>
+        <text x="${width - padding.right}" y="12" text-anchor="end" fill="#6b7280" font-size="12">成交率</text>
+        <text x="${width / 2}" y="${height - 2}" text-anchor="middle" fill="#6b7280" font-size="12">日期</text>
+        ${xLabels}
+        ${lines}
+      `;
+    };
+
+    selectedMonth.textContent = formatSelectedMonth(monthPicker.value);
+    renderTable(state);
+    renderLegend();
+    renderChart(state);
+
+    chartLegend.addEventListener("change", (event) => {
+      const metric = event.target.dataset.metric;
+      if (!metric) {
+        return;
+      }
+
+      if (event.target.checked) {
+        visibleMetrics.add(metric);
+      } else {
+        visibleMetrics.delete(metric);
+      }
+
+      renderChart(state);
+    });
+
+    const requirementModal = document.querySelector("#requirementModal");
+    const openRequirement = document.querySelector("#openRequirement");
+    const closeRequirement = document.querySelector("#closeRequirement");
+
+    openRequirement.addEventListener("click", () => {
+      requirementModal.classList.add("show");
+    });
+
+    closeRequirement.addEventListener("click", () => {
+      requirementModal.classList.remove("show");
+    });
+
+    requirementModal.addEventListener("click", (event) => {
+      if (event.target === requirementModal) {
+        requirementModal.classList.remove("show");
+      }
+    });
+  </script>
+</body>
+</html>

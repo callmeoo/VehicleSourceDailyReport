@@ -651,7 +651,7 @@
         </li>
         <li>
           <span class="req-title">指标</span>
-          <span class="req-desc">检测数量、上拍数量、成交数量、总毛利、台均总毛利、成交率均沿用「经管报表-成绩单」对应口径。</span>
+          <span class="req-desc">查验台次（去重）、上拍数量、成交数量、总毛利、台均总毛利、成交率均沿用「经管报表-成绩单」对应口径。</span>
         </li>
         <li>
           <span class="req-title">合计</span>
@@ -793,7 +793,7 @@
       const totalGross = sum(gross);
 
       const metrics = [
-        { name: "检测数量（台）", color: "#1677ff", chart: true, axis: "left", daily: detect, total: sum(detect), fmt: fmtInt },
+        { name: "查验台次（去重）", color: "#1677ff", chart: true, axis: "left", daily: detect, total: sum(detect), fmt: fmtInt },
         { name: "上拍数量（去重）", color: "#22c55e", chart: true, axis: "left", daily: up, total: totalUp, fmt: fmtInt },
         { name: "成交数量（台）", color: "#faad14", chart: true, axis: "left", daily: deal, total: totalDeal, fmt: fmtInt },
         { name: "总毛利（元）", color: "#ef4444", chart: false, daily: gross, total: totalGross, fmt: fmtInt },
@@ -808,7 +808,7 @@
     const head = document.querySelector("#reportHead");
     const body = document.querySelector("#reportBody");
     const headerColumns = ["业务指标", "合计", ...Array.from({ length: 31 }, (_, index) => String(index + 1))];
-    const chartMetricNames = ["检测数量（台）", "上拍数量（去重）", "成交数量（台）", "成交率"];
+    const chartMetricNames = ["查验台次（去重）", "上拍数量（去重）", "成交数量（台）", "成交率"];
     const visibleMetrics = new Set(chartMetricNames);
 
     head.innerHTML = `<tr>${headerColumns.map((column) => `<th>${column}</th>`).join("")}</tr>`;

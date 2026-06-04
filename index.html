@@ -256,6 +256,23 @@
       background: #f3f4f6;
     }
 
+    #queryBtn,
+    #resetBtn,
+    #exportBtn {
+      cursor: pointer;
+    }
+
+    #resetBtn:hover,
+    #exportBtn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    #queryBtn:hover {
+      background: #0958d9;
+      border-color: #0958d9;
+    }
+
     .table-header {
       display: flex;
       align-items: center;
@@ -589,9 +606,9 @@
               <select class="control" id="auctionTypeSelect" aria-label="拍卖方式"></select>
             </div>
             <div class="actions">
-              <button>重置</button>
-              <button class="primary">查询</button>
-              <button>导出</button>
+              <button id="resetBtn">重置</button>
+              <button class="primary" id="queryBtn">查询</button>
+              <button id="exportBtn">导出</button>
             </div>
           </section>
 
@@ -757,11 +774,21 @@
       return x - Math.floor(x);
     };
 
-    // 原型用确定性 mock 数据：按所选月份生成每日值，合计统一由每日值推导，保证表内自洽
-    const buildData = (monthValue) => {
+    // 不同筛选条件折进随机种子，保证「查询」切换大区域/小区域/拍卖方式时数据会变（且可复现，非真随机）
+    const filterSeed = (filters) => {
+      const text = `${filters.bigArea}|${filters.smallArea}|${filters.auctionType}`;
+      let hash = 0;
+      for (let i = 0; i < text.length; i += 1) {
+        hash = (hash * 31 + text.charCodeAt(i)) % 100000;
+      }
+      return hash;
+    };
+
+    // 原型用确定性 mock 数据：按所选月份 + 筛选条件生成每日值，合计统一由每日值推导，保证表内自洽
+    const buildData = (monthValue, filters) => {
       const [year, month] = monthValue.split("-").map(Number);
       const validDays = new Date(year, month, 0).getDate();
-      const seed0 = year * 31 + month * 7;
+      const seed0 = year * 31 + month * 7 + filterSeed(filters);
       const detect = [];
       const up = [];
       const deal = [];
@@ -834,8 +861,6 @@
       }).join("");
     };
 
-    let state = buildData(document.querySelector("#monthPicker").value);
-
     const monthPicker = document.querySelector("#monthPicker");
     const selectedMonth = document.querySelector(".selected-month");
     const chartLegend = document.querySelector("#chartLegend");
@@ -846,12 +871,38 @@
       return `所选月份：${year}年-${Number(month)}月`;
     };
 
-    monthPicker.addEventListener("change", () => {
-      state = buildData(monthPicker.value);
-      selectedMonth.textContent = formatSelectedMonth(monthPicker.value);
+    const DEFAULTS = { month: "2026-05", bigArea: "1-广东-广州", smallArea: "全部", auctionType: "全部" };
+
+    const getFilters = () => ({
+      month: monthPicker.value,
+      bigArea: bigAreaSelect.value,
+      smallArea: smallAreaSelect.value,
+      auctionType: auctionTypeSelect.value
+    });
+
+    // appliedFilters = 已点「查询」生效的条件；表格、趋势图、导出都以它为准，
+    // 这样「改了筛选还没点查询」时，导出内容与页面展示始终一致
+    let appliedFilters = getFilters();
+    let state = buildData(appliedFilters.month, appliedFilters);
+
+    const applyQuery = () => {
+      appliedFilters = getFilters();
+      state = buildData(appliedFilters.month, appliedFilters);
+      selectedMonth.textContent = formatSelectedMonth(appliedFilters.month);
       renderTable(state);
       renderChart(state);
-    });
+    };
+
+    const resetFilters = () => {
+      monthPicker.value = DEFAULTS.month;
+      fillOptions(bigAreaSelect, bigAreaOptions, DEFAULTS.bigArea);
+      fillOptions(smallAreaSelect, smallAreaMockMap[DEFAULTS.bigArea] || ["全部"], DEFAULTS.smallArea);
+      fillOptions(auctionTypeSelect, auctionTypeOptions, DEFAULTS.auctionType);
+      applyQuery();
+    };
+
+    document.querySelector("#queryBtn").addEventListener("click", applyQuery);
+    document.querySelector("#resetBtn").addEventListener("click", resetFilters);
 
     const renderLegend = () => {
       chartLegend.innerHTML = state.metrics.filter((metric) => metric.chart).map((metric) => `
@@ -950,10 +1001,8 @@
       `;
     };
 
-    selectedMonth.textContent = formatSelectedMonth(monthPicker.value);
-    renderTable(state);
     renderLegend();
-    renderChart(state);
+    applyQuery();
 
     chartLegend.addEventListener("change", (event) => {
       const metric = event.target.dataset.metric;
@@ -968,6 +1017,53 @@
       }
 
       renderChart(state);
+    });
+
+    // 导出：输出当前筛选条件 + 表格展示结果，表头/指标行/日期列顺序与页面一致
+    // 用 CSV + BOM：无外部依赖、离线可用，Excel / WPS 直接打开中文不乱码
+    const exportBtn = document.querySelector("#exportBtn");
+
+    const csvEscape = (field) => {
+      const text = String(field);
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+
+    // 成交率带 % 号，其余取整且不加千分位（便于 Excel 当数字处理）
+    const cellValue = (metric, value) =>
+      (metric.fmt === fmtPct ? `${value.toFixed(1)}%` : String(Math.round(value)));
+
+    const buildCsv = () => {
+      const [year, month] = appliedFilters.month.split("-");
+      // 月份融进日期列头（如 2026.5.1），不再单列「所选月份/大区域/小区域/拍卖方式」行；
+      // 短月份只输出实际存在的日期，避免出现 2026.2.30 这类无效日期
+      const dateColumns = Array.from(
+        { length: state.validDays },
+        (_, index) => `${year}.${Number(month)}.${index + 1}`
+      );
+      const rows = [
+        ["车源部门业务日报表"],
+        [],
+        ["业务指标", "合计", ...dateColumns]
+      ];
+
+      state.metrics.forEach((metric) => {
+        const daily = metric.daily.slice(0, state.validDays).map((value) => cellValue(metric, value));
+        rows.push([metric.name, cellValue(metric, metric.total), ...daily]);
+      });
+
+      return rows.map((row) => row.map(csvEscape).join(",")).join("\r\n");
+    };
+
+    exportBtn.addEventListener("click", () => {
+      const blob = new Blob(["\ufeff" + buildCsv()], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `车源部门业务日报表_${appliedFilters.month}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     });
 
     const requirementModal = document.querySelector("#requirementModal");
